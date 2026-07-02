@@ -69,3 +69,11 @@ class TicketUpdate(BaseModel):
     status: Status | None = None
     priority: Priority | None = None
     assignee: str | None = None
+
+class TicketStats(BaseModel):
+    """Agregirane statistike ticketa."""
+
+    total: int
+    by_status: dict[str, int]
+    by_priority: dict[str, int]
+    modified: int

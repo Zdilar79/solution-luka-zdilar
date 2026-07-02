@@ -81,3 +81,26 @@ async def update_ticket(
     await session.commit()
     await session.refresh(ticket)
     return ticket
+
+
+async def get_stats(session: AsyncSession) -> dict:
+    total = await session.scalar(select(func.count()).select_from(Ticket)) or 0
+
+    status_rows = await session.execute(
+        select(Ticket.status, func.count()).group_by(Ticket.status)
+    )
+    priority_rows = await session.execute(
+        select(Ticket.priority, func.count()).group_by(Ticket.priority)
+    )
+    modified = await session.scalar(
+        select(func.count())
+        .select_from(Ticket)
+        .where(Ticket.is_modified.is_(True))
+    ) or 0
+
+    return {
+        "total": total,
+        "by_status": {status: count for status, count in status_rows.all()},
+        "by_priority": {priority: count for priority, count in priority_rows.all()},
+        "modified": modified,
+    }

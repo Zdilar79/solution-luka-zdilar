@@ -53,3 +53,31 @@ async def search_tickets(
     total = await session.scalar(count_stmt) or 0
     result = await session.scalars(list_stmt)
     return result.all(), total
+
+
+async def create_ticket(session: AsyncSession, data: dict) -> Ticket:
+    # id dodjeljujemo sami (autoincrement je isključen jer normalno dolazi iz izvora)
+    max_id = await session.scalar(select(func.max(Ticket.id)))
+    new_id = (max_id or 0) + 1
+
+    ticket = Ticket(id=new_id, is_modified=True, raw_data={}, **data)
+    session.add(ticket)
+    await session.commit()
+    await session.refresh(ticket)
+    return ticket
+
+
+async def update_ticket(
+    session: AsyncSession, ticket_id: int, changes: dict
+) -> Ticket | None:
+    ticket = await session.get(Ticket, ticket_id)
+    if ticket is None:
+        return None
+
+    for field, value in changes.items():
+        setattr(ticket, field, value)
+
+    ticket.is_modified = True  # <- štit: sljedeći sync neće pregaziti ovaj ticket
+    await session.commit()
+    await session.refresh(ticket)
+    return ticket

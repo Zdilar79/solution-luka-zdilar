@@ -1,6 +1,11 @@
 from datetime import datetime
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+# Dozvoljene vrijednosti — Pydantic sam odbije sve izvan ovoga
+Status = Literal["open", "closed"]
+Priority = Literal["low", "medium", "high"]
 
 
 class TicketListItem(BaseModel):
@@ -17,7 +22,6 @@ class TicketListItem(BaseModel):
     @field_validator("description")
     @classmethod
     def truncate_description(cls, value: str) -> str:
-        # zadatak traži opis <= 100 znakova u listi
         return value[:100]
 
 
@@ -45,3 +49,23 @@ class PaginatedTickets(BaseModel):
     total: int
     skip: int
     limit: int
+
+
+class TicketCreate(BaseModel):
+    """Ulaz za POST /tickets."""
+
+    title: str = Field(min_length=1, max_length=255)
+    description: str = ""
+    status: Status = "open"
+    priority: Priority = "medium"
+    assignee: str | None = None
+
+
+class TicketUpdate(BaseModel):
+    """Ulaz za PATCH /tickets/{id} — sva polja opcionalna."""
+
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = None
+    status: Status | None = None
+    priority: Priority | None = None
+    assignee: str | None = None

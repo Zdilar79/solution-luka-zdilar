@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+# ne piši .pyc datoteke; ispisuj logove odmah (bez buffera)
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# kopiraj samo ono što treba za instalaciju + pokretanje
+COPY pyproject.toml ./
+COPY src ./src
+COPY alembic ./alembic
+COPY alembic.ini ./
+
+RUN pip install --upgrade pip && pip install .
+
+EXPOSE 8000
+
+CMD ["uvicorn", "tickethub.main:app", "--host", "0.0.0.0", "--port", "8000"]

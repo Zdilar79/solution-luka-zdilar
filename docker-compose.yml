@@ -16,5 +16,17 @@ services:
       timeout: 5s
       retries: 5
 
+  app:
+    build: .
+    container_name: tickethub-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://tickethub:tickethub@db:5432/tickethub
+    ports:
+      - "8000:8000"
+    command: sh -c "alembic upgrade head && uvicorn tickethub.main:app --host 0.0.0.0 --port 8000"
+
 volumes:
   pgdata:
